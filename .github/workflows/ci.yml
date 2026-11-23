@@ -1,0 +1,19 @@
+name: macOS build and tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift and native tests
+        run: make test
+      - name: Package app
+        run: make app
+      - name: Verify bundle
+        run: |
+          plutil -lint dist/macTools.app/Contents/Info.plist
+          codesign --verify --strict dist/macTools.app
