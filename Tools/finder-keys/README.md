@@ -17,6 +17,8 @@ selbst wenn das Öffnen inzwischen eine andere Anwendung aktiviert hat.
 
 Die native Testsuite prüft Return, Ziffernblock-Enter, F2, Modifikatoren und
 zusammengehörige Key-down-/Key-up-Ereignisse. macTools benötigt für den Einsatz
-die Bedienungshilfen-Freigabe. Ein automatischer Neustart nach einem Fehler ist
+die Bedienungshilfen-Freigabe. Bei der lokalen Ad-hoc-Signatur muss auch der
+Helper `macTools.app/Contents/Helpers/finder_keys` separat freigegeben werden;
+ein vorhandener Eintrag für das frühere Programm im Projektordner reicht nicht. Ein automatischer Neustart nach einem Fehler ist
 bewusst nicht eingerichtet, damit fehlende Rechte keine wiederholten
 Berechtigungsdialoge auslösen.

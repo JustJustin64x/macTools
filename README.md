@@ -39,7 +39,13 @@ Bauen auch direkt im Finder geöffnet werden. `make app` erstellt die App nur un
 3. Füge **macTools.app** unter **Datenschutz & Sicherheit → Bedienungshilfen**
    hinzu und aktiviere die Freigabe. Im Auswahldialog führt Cmd+Shift+G zu
    `~/Applications/macTools.app`.
-4. Aktiviere **Finder Enter** mit dem Schalter.
+4. Füge für den eigenständigen Tastaturfilter zusätzlich
+   `~/Applications/macTools.app/Contents/Helpers/finder_keys` hinzu und aktiviere
+   auch diesen Eintrag. Cmd+Shift+G erlaubt im Auswahldialog die Eingabe des
+   vollständigen Pfades. Ein alter `finder_keys`-Eintrag aus dem ursprünglichen
+   Projektordner gilt nicht automatisch für den neuen Helper.
+5. Aktiviere **Finder Enter** mit dem Schalter beziehungsweise wähle
+   **Erneut starten**, wenn die Freigabe erst nach dem Start erteilt wurde.
 
 Die App zeigt die tatsächlich laufenden Tools an. Ein eingeschalteter Schalter
 bedeutet, dass der Autostart eingerichtet ist. **Aktiv** bedeutet, dass der
@@ -56,7 +62,7 @@ diesem Projekt aber noch nicht eingerichtet.
 
 Die App erkennt die bisherige Konfiguration `local.finder-keys.plist`. Sie bleibt
 zunächst aktiv, damit die bestehende Funktion während der Einrichtung erhalten
-bleibt. Nach der Freigabe von macTools kannst du **In macTools übernehmen** wählen.
+bleibt. Nach der Freigabe von macTools und des Finder-Helpers kannst du **In macTools übernehmen** wählen.
 Dabei wird die alte Konfiguration unter
 `~/Library/Application Support/macTools/Backups/` gesichert und der alte Prozess
 beendet, bevor der neue startet. Es laufen dadurch keine zwei Filter gleichzeitig.
