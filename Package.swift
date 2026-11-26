@@ -12,6 +12,7 @@ let package = Package(
         .target(name: "MacToolsCore"),
         .executableTarget(name: "MacTools", dependencies: ["MacToolsCore", "FinderKeys"],
                           linkerSettings: [.linkedFramework("SwiftUI")]),
+        .executableTarget(name: "MacToolsUpdate", dependencies: ["MacToolsCore"], path: "Sources/MacToolsUpdater"),
         .executableTarget(name: "MacToolsCoreTests", dependencies: ["MacToolsCore"], path: "Tests/MacToolsCoreTests")
     ]
 )

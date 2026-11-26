@@ -17,6 +17,7 @@ struct ServiceTests {
         try testServiceStates()
         try await testDevelopmentBinaryCannotReplaceWorkingAgent()
         try testCatalog()
+        try testUpdateValidation()
         print("Core tests passed: paths, login policy, process states, development guard, catalog.")
     }
 
@@ -53,6 +54,25 @@ struct ServiceTests {
         } catch ServiceError.notInstalled {
             try expect(!FileManager.default.fileExists(atPath: scratch.path), "Rejection must not modify disk or agents")
         }
+    }
+
+    static func testUpdateValidation() throws {
+        let commit = String(repeating: "a", count: 40)
+        let json = """
+        {"tag_name":"build-\(commit)","draft":false,"prerelease":false,"assets":[
+          {"name":"macTools.zip","browser_download_url":"https://github.com/JustJustin64x/macTools/releases/download/build-\(commit)/macTools.zip"},
+          {"name":"SHA256SUMS","browser_download_url":"https://example.com/SHA256SUMS"}]}
+        """
+        let release = try JSONDecoder().decode(UpdateRelease.self, from: Data(json.utf8))
+        try expect(release.commit == commit && release.assetURL(named: "macTools.zip") != nil, "Valid release rejected")
+        try expect(release.assetURL(named: "SHA256SUMS") == nil, "Foreign asset host must be rejected")
+        let digest = String(repeating: "b", count: 64)
+        try expect(UpdateRelease.expectedSHA256("\(digest)  macTools.zip\n", filename: "macTools.zip") == digest, "Checksum parsing failed")
+        try expect(UpdateRelease.expectedSHA256("bad  macTools.zip", filename: "macTools.zip") == nil, "Malformed checksum accepted")
+        try expect(UpdateRelease.expectedSHA256("\(digest)  other.zip", filename: "macTools.zip") == nil, "Wrong asset checksum accepted")
+        try expect(UpdateRelease.archivePathsAreSafe("macTools.app/\nmacTools.app/Contents/MacOS/macTools\n"), "Valid archive rejected")
+        try expect(!UpdateRelease.archivePathsAreSafe("macTools.app/../../outside"), "Archive traversal accepted")
+        try expect(!UpdateRelease.archivePathsAreSafe("/tmp/macTools.app/Contents"), "Absolute archive path accepted")
     }
 
     static func testCatalog() throws {

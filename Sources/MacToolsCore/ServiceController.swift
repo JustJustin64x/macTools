@@ -4,6 +4,7 @@ public struct ToolSnapshot: Sendable {
     public let enabled: Bool
     public let status: ServiceStatus
     public let legacy: Bool
+    public let needsAccessibility: Bool
 }
 
 public struct CommandResult: Sendable {
@@ -48,9 +49,11 @@ public actor ServiceController {
         let legacy = tool.id == "finder-keys" && !modern && files.fileExists(atPath: legacyPlist.path)
         let label = legacy ? "local.finder-keys" : tool.launchLabel
         let result = try run(["print", "\(domain)/\(label)"])
-        return ToolSnapshot(enabled: modern || legacy,
-                            status: ServiceStatus(launchctlOutput: result.output, exitCode: result.code),
-                            legacy: legacy)
+        let status = ServiceStatus(launchctlOutput: result.output, exitCode: result.code)
+        let log = (try? String(contentsOf: config.logDirectory.appendingPathComponent("stderr.log"), encoding: .utf8)) ?? ""
+        let permission = log.split(separator: "\n").last { $0.hasPrefix("Bedienungshilfen:") }
+        return ToolSnapshot(enabled: modern || legacy, status: status, legacy: legacy,
+                            needsAccessibility: modern && !status.isRunning && permission?.contains("NICHT freigegeben") == true)
     }
 
     public func setEnabled(_ enabled: Bool, tool: ToolDefinition) throws {

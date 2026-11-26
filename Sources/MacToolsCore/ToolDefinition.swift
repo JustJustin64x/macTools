@@ -25,6 +25,6 @@ public struct ToolDefinition: Identifiable, Sendable {
                     Shortcut(keys: "fn + F2", action: "Je nach Tastatureinstellung")]
     )
 
-    // Add new tools here, then implement their --run-tool entry point.
+    // Add new tools here, then build their separate helper into Contents/Helpers/.
     public static let catalog: [ToolDefinition] = [.finderKeys]
 }

@@ -44,6 +44,8 @@ struct MacToolsApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .appInfo) {
+                Button("Nach Updates suchen …") { model.checkForUpdates() }.disabled(model.checkingUpdates)
+                Divider()
                 Button("Bedienungshilfen öffnen …") { model.openAccessibility() }
             }
         }

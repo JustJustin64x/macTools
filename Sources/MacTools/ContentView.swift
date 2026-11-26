@@ -23,7 +23,7 @@ struct ContentView: View {
                 Divider()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
-                        if !model.accessibilityGranted { permissionCard }
+                        if model.permissionRequired { permissionCard }
                         if model.hasLegacy { migrationCard }
                         HStack {
                             Text(category).font(.title3.weight(.semibold))
@@ -53,6 +53,10 @@ struct ContentView: View {
             get: { model.error != nil }, set: { if !$0 { model.error = nil } }
         )) { Button("OK") { model.error = nil } }
         message: { Text(model.error ?? "") }
+        .alert("macTools-Update", isPresented: Binding(
+            get: { model.updateMessage != nil }, set: { if !$0 { model.updateMessage = nil } }
+        )) { Button("OK") { model.updateMessage = nil } }
+        message: { Text(model.updateMessage ?? "") }
     }
 
     private var sidebar: some View {
@@ -78,7 +82,7 @@ struct ContentView: View {
                 Text("\(model.activeCount) von \(model.tools.count) aktiv")
                     .font(.caption).foregroundStyle(.secondary)
             }.padding(22)
-            Text("macTools 0.1.0").font(.system(size: 10)).foregroundStyle(.tertiary)
+            Text("macTools \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.2.0")").font(.system(size: 10)).foregroundStyle(.tertiary)
                 .padding(.horizontal, 22).padding(.bottom, 18)
         }
         .background(Color(nsColor: .underPageBackgroundColor))
@@ -121,10 +125,11 @@ struct ContentView: View {
             Image(systemName: "hand.raised.fill").font(.title2).foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 6) {
                 Text("Einmal freigeben, dann loslegen.").font(.headline)
-                Text("Erlaube macTools unter Bedienungshilfen, Tastatureingaben anzupassen. Füge dort diese macTools-App hinzu und aktiviere den Schalter.")
+                Text("Erlaube dem Finder-Filter unter Bedienungshilfen, Tastatureingaben anzupassen. Füge dort die Datei finder_keys aus dem App-Paket hinzu und aktiviere den Schalter.")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Button("Bedienungshilfen öffnen …") { model.openAccessibility() }
                     .buttonStyle(.link).padding(.top, 4)
+                Button("Finder-Filter im Finder zeigen") { model.revealHelper(.finderKeys) }.buttonStyle(.link)
             }
             Spacer(minLength: 0)
         }
@@ -140,7 +145,7 @@ struct ContentView: View {
                 Text("Übernimm ihn in macTools, um ihn hier zu verwalten. Die bisherige Konfiguration wird gesichert.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("In macTools übernehmen") { model.restart(.finderKeys) }
-                    .disabled(!model.accessibilityGranted || model.busy.contains("finder-keys"))
+                    .disabled(model.busy.contains("finder-keys"))
                     .padding(.top, 5)
             }
         }.padding(18).frame(maxWidth: .infinity, alignment: .leading)

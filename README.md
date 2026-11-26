@@ -16,10 +16,44 @@ Das Schließen des Fensters beendet die Tools nicht.
 In Such- und Textfeldern bleibt Enter unverändert. Kombinationen mit Cmd, Ctrl,
 Alt oder Shift bleiben unverändert. Außerhalb des Finders greift das Tool nicht ein.
 
-## Voraussetzungen und Installation
+## Starten und automatische Updates
+
+**Cmd + Leertaste → macTools → Enter** öffnet die App über Spotlight.
+Der feste Starter liegt unter `/Applications/macTools.app` und öffnet immer die
+aktuelle App unter `~/Applications/macTools.app`. Der bestehende Installationsort
+bleibt damit auch für die Finder-Berechtigung unverändert.
+
+Updates sind auf diesem Mac auf zwei Wegen eingerichtet:
+
+- **GitHub:** Nach jedem Push auf `main` baut und testet GitHub die App für Apple
+  Silicon und Intel und veröffentlicht ein unveränderliches Release. Ein eigener
+  Anmeldedienst prüft alle 15 Minuten und bei der Anmeldung auf eine neue Version.
+  Er lädt das App-Paket, prüft SHA-256, App-Kennung, Quellversion und Codesignatur
+  und installiert es am bestehenden Ort. Zum Aktualisieren werden weder Git noch
+  Swift auf dem Ziel-Mac benötigt. Eine neuere lokale Version wird nicht durch
+  eine ältere GitHub-Version ersetzt.
+- **Lokaler Code:** `make install` aktiviert in diesem Checkout die mitgelieferten
+  Git-Hooks. Nach einem Code-Commit oder `git pull` werden Tests, Build und
+  Installation automatisch ausgeführt. Reine Dokumentationsänderungen lösen
+  keine Installation aus. Bei noch nicht commiteten Änderungen wird die lokale
+  Installation verschoben, damit keine gemischte Arbeitsversion installiert wird.
+
+Im Menü **macTools → Nach Updates suchen …** kannst du die GitHub-Prüfung jederzeit
+selbst starten. Einstellungen und aktivierte Tools bleiben bei Updates erhalten.
+Ein geöffnetes Verwaltungsfenster wird bei einer Installation neu gestartet.
+Unveränderte Helper werden nicht überschrieben oder neu gestartet.
+
+**macOS-Berechtigungen:** Das Projekt verwendet derzeit eine Ad-hoc-Signatur,
+keine Developer-ID-Signatur. Nach einem Wechsel des signierten Tastaturfilters
+kann macOS dessen Bedienungshilfen-Freigabe erneut verlangen. Das lässt sich nicht
+zuverlässig automatisch bestätigen. Die App zeigt dann den betroffenen Filter
+und eine Schaltfläche zum Auffinden im Finder. Für dauerhaft gleichbleibende
+Signaturidentitäten wird eine Developer-ID-Signatur benötigt.
+
+## Voraussetzungen und Installation aus dem Quellcode
 
 - macOS 14 oder neuer
-- Xcode Command Line Tools mit Swift 5.9 oder neuer (`xcode-select --install`)
+- Für die lokale Entwicklung: Xcode Command Line Tools mit Swift 5.9 oder neuer
 - Keine zusätzlichen Pakete oder externen Abhängigkeiten
 
 ```sh
@@ -27,42 +61,36 @@ git clone https://github.com/JustJustin64x/macTools.git
 cd macTools
 make test
 make install
-make run
 ```
 
-Die App wird unter `~/Applications/macTools.app` installiert. Das kann nach dem
-Bauen auch direkt im Finder geöffnet werden. `make app` erstellt die App nur unter
-`dist/macTools.app`, ohne sie zu installieren.
+Nach der Installation kannst du macTools über Spotlight starten. `make app`
+erstellt nur das App-Paket unter `dist/macTools.app`, ohne zu installieren.
+Fertige App-Pakete findest du unter
+[GitHub Releases](https://github.com/JustJustin64x/macTools/releases/latest).
 
-1. Öffne macTools.
-2. Öffne über den Hinweis im Fenster die Bedienungshilfen-Einstellungen.
-3. Füge **macTools.app** unter **Datenschutz & Sicherheit → Bedienungshilfen**
-   hinzu und aktiviere die Freigabe. Im Auswahldialog führt Cmd+Shift+G zu
-   `~/Applications/macTools.app`.
-4. Füge für den eigenständigen Tastaturfilter zusätzlich
-   `~/Applications/macTools.app/Contents/Helpers/finder_keys` hinzu und aktiviere
-   auch diesen Eintrag. Cmd+Shift+G erlaubt im Auswahldialog die Eingabe des
-   vollständigen Pfades. Ein alter `finder_keys`-Eintrag aus dem ursprünglichen
-   Projektordner gilt nicht automatisch für den neuen Helper.
-5. Aktiviere **Finder Enter** mit dem Schalter beziehungsweise wähle
-   **Erneut starten**, wenn die Freigabe erst nach dem Start erteilt wurde.
+Beim ersten Aktivieren von **Finder Enter** benötigt nur dessen Helper eine
+Bedienungshilfen-Freigabe. Füge unter **Datenschutz & Sicherheit → Bedienungshilfen**
+über **+** diese Datei hinzu und aktiviere den Eintrag:
+
+```text
+~/Applications/macTools.app/Contents/Helpers/finder_keys
+```
+
+Cmd+Shift+G erlaubt im Auswahldialog die Eingabe des vollständigen Pfades.
+Ein alter `finder_keys`-Eintrag aus einem anderen Ordner gilt nicht automatisch
+für den aktuellen Helper. Anschließend im macTools-Fenster **Erneut starten**
+wählen. Die Verwaltungsoberfläche selbst benötigt keine Bedienungshilfen-Freigabe.
 
 Die App zeigt die tatsächlich laufenden Tools an. Ein eingeschalteter Schalter
 bedeutet, dass der Autostart eingerichtet ist. **Aktiv** bedeutet, dass der
-Hintergrundprozess läuft. Bei fehlenden Rechten oder einem fehlgeschlagenen Start
-zeigt die App einen Hinweis und bietet **Erneut starten** sowie das Protokoll an.
-
-Für den Start bei der Anmeldung darf die installierte App nicht verschoben werden.
-Die lokale Entwicklung verwendet eine Ad-hoc-Signatur. Nach einem Neubau kann es
-nötig sein, macTools in den Bedienungshilfen erneut freizugeben. Für die Verteilung
-an andere Macs ist eine Developer-ID-Signatur mit Notarisierung vorgesehen, in
-diesem Projekt aber noch nicht eingerichtet.
+Hintergrundprozess läuft. Die App darf für den Tool-Autostart nicht verschoben
+werden; der Spotlight-Starter bleibt ebenfalls am festen Ort.
 
 ## Vorhandenen Finder-Autostart übernehmen
 
 Die App erkennt die bisherige Konfiguration `local.finder-keys.plist`. Sie bleibt
 zunächst aktiv, damit die bestehende Funktion während der Einrichtung erhalten
-bleibt. Nach der Freigabe von macTools und des Finder-Helpers kannst du **In macTools übernehmen** wählen.
+bleibt. Nach der Freigabe des Finder-Helpers kannst du **In macTools übernehmen** wählen.
 Dabei wird die alte Konfiguration unter
 `~/Library/Application Support/macTools/Backups/` gesichert und der alte Prozess
 beendet, bevor der neue startet. Es laufen dadurch keine zwei Filter gleichzeitig.
@@ -76,6 +104,7 @@ startet nicht automatisch als Fenster; nur aktivierte Tools starten im Hintergru
 Sources/
   MacTools/                 SwiftUI-Fenster, Zustand und Programmeinstieg
   MacToolsCore/             Tool-Katalog, LaunchAgents und Prozessstatus
+  MacToolsUpdater/          Download und Prüfung von GitHub-Updates
   FinderKeys/               Objective-C-Implementierung von Finder Enter
     include/                Öffentliche C-Schnittstelle für Swift
 Tools/
@@ -98,6 +127,8 @@ make app                    # Release-App erstellen und lokal signieren
 make install                # App installieren; bestehende App vorher sichern
 make run                    # Installierte App öffnen
 make check                  # Rechte und Tastaturfilter prüfen
+make check-updates          # GitHub-Version prüfen, ohne Installation
+make update                 # GitHub-Update sofort installieren
 ```
 
 Das Fenster und die Hintergrundprozesse sind getrennte Programme im selben
@@ -136,11 +167,26 @@ listet nur tatsächlich implementierte Tools auf.
 
 ## Speicherorte und Deinstallation
 
+- Spotlight-Starter: `/Applications/macTools.app`
 - App: `~/Applications/macTools.app`
+- Update-Dienst: `~/Library/LaunchAgents/io.github.justjustin64x.macTools.updates.plist`
+- Update-Protokolle: `~/Library/Logs/macTools/updates/`
 - Autostart pro Tool: `~/Library/LaunchAgents/io.github.justjustin64x.macTools.<id>.plist`
 - Protokolle: `~/Library/Logs/macTools/<id>/`
 - Sicherungen: `~/Library/Application Support/macTools/Backups/`
 
-Zum Deinstallieren zuerst alle Tools im Fenster deaktivieren, macTools beenden
-und danach die App in den Papierkorb legen. Die Protokolle und Sicherungen können
+Zum Abschalten automatischer GitHub-Updates:
+
+```sh
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/io.github.justjustin64x.macTools.updates.plist
+mv ~/Library/LaunchAgents/io.github.justjustin64x.macTools.updates.plist ~/Library/LaunchAgents/io.github.justjustin64x.macTools.updates.plist.disabled
+```
+
+Lokale Git-Hooks lassen sich mit `git config --local --unset core.hooksPath`
+abschalten. Ein einzelner Commit kann mit `MACTOOLS_SKIP_AUTO_INSTALL=1 git commit …`
+ohne automatische Installation erfolgen.
+
+Zum Deinstallieren zuerst die automatischen Updates abschalten und alle Tools
+im Fenster deaktivieren. Anschließend macTools beenden und beide App-Pakete in
+den Papierkorb legen. Die Protokolle und Sicherungen können
 bei Bedarf separat entfernt werden.

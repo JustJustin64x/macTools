@@ -1,5 +1,4 @@
 import AppKit
-import ApplicationServices
 import MacToolsCore
 import SwiftUI
 
@@ -7,20 +6,21 @@ import SwiftUI
 final class AppModel: ObservableObject {
     @Published var snapshots: [String: ToolSnapshot] = [:]
     @Published var busy = Set<String>()
-    @Published var accessibilityGranted = AXIsProcessTrusted()
     @Published var error: String?
+    @Published var updateMessage: String?
+    @Published var checkingUpdates = false
     private let controller = ServiceController(executable: Bundle.main.executableURL!)
     private var refreshing = false
     let tools = ToolDefinition.catalog
 
     var activeCount: Int { snapshots.values.filter { $0.status.isRunning }.count }
+    var permissionRequired: Bool { snapshots.values.contains { $0.needsAccessibility } }
     var hasLegacy: Bool { snapshots.values.contains { $0.legacy } }
 
     func refresh() async {
         guard !refreshing else { return }
         refreshing = true
         defer { refreshing = false }
-        accessibilityGranted = AXIsProcessTrusted()
         for tool in tools where !busy.contains(tool.id) {
             do { snapshots[tool.id] = try await controller.snapshot(tool) }
             catch { self.error = error.localizedDescription }
@@ -29,18 +29,10 @@ final class AppModel: ObservableObject {
 
     func setEnabled(_ enabled: Bool, tool: ToolDefinition) {
         guard !busy.contains(tool.id) else { return }
-        if enabled && !accessibilityGranted {
-            error = "Bitte gib macTools zuerst unter Datenschutz & Sicherheit → Bedienungshilfen frei. Danach kannst du das Tool aktivieren."
-            return
-        }
         perform(tool) { try await self.controller.setEnabled(enabled, tool: tool) }
     }
 
     func restart(_ tool: ToolDefinition) {
-        guard accessibilityGranted else {
-            error = "Bitte zuerst die Bedienungshilfen-Freigabe für macTools aktivieren."
-            return
-        }
         perform(tool) { try await self.controller.restart(tool) }
     }
 
@@ -57,8 +49,36 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func checkForUpdates() {
+        guard !checkingUpdates else { return }
+        checkingUpdates = true
+        let executable = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/macToolsUpdate")
+        Task {
+            let message = await Task.detached(priority: .utility) {
+                do {
+                    let process = Process()
+                    process.executableURL = executable
+                    let pipe = Pipe()
+                    process.standardOutput = pipe
+                    process.standardError = pipe
+                    try process.run()
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    process.waitUntilExit()
+                    return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+                } catch { return error.localizedDescription }
+            }.value
+            checkingUpdates = false
+            updateMessage = message.isEmpty ? "Update-Prüfung abgeschlossen." : message
+        }
+    }
+
     func openAccessibility() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    }
+
+    func revealHelper(_ tool: ToolDefinition) {
+        let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/\(tool.executableName)")
+        NSWorkspace.shared.activateFileViewerSelecting([helper])
     }
 
     func openLogs(_ tool: ToolDefinition) {
