@@ -78,6 +78,14 @@ gui_pids="$(/usr/bin/pgrep -f -x "$installed_app/Contents/MacOS/macTools" || tru
 if [ -n "$gui_pids" ]; then
     restart_gui=1
     for pid in $gui_pids; do kill -TERM "$pid"; done
+    # Wait until Launch Services no longer sees the terminating process before
+    # opening the replacement, otherwise the open event can reach the old PID.
+    for pid in $gui_pids; do
+        for ((attempt=0; attempt<50; attempt++)); do
+            if ! kill -0 "$pid" 2>/dev/null; then break; fi
+            sleep 0.1
+        done
+    done
 fi
 modified=1
 # --checksum avoids rewriting unchanged signed helpers; --delete removes stale
@@ -108,14 +116,17 @@ if [ "$launcher_app" != "$installed_app" ]; then
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleVersion</key><string>1</string>
 <key>CFBundleShortVersionString</key><string>1.0</string>
-<key>LSUIElement</key><true/>
+<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+<key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 </dict></plist>
 PLIST
     /usr/bin/codesign --force --sign - --identifier io.github.justjustin64x.macTools.Launcher "$launcher_app"
     /usr/bin/codesign --verify --strict "$launcher_app"
+    touch "$launcher_app"
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$launcher_app" 2>/dev/null || true
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$launcher_app"
-    /usr/bin/mdimport "$launcher_app" || true
+    /usr/bin/mdimport -i "$launcher_app" || true
 fi
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$installed_app"
 /usr/bin/mdimport "$installed_app" || true

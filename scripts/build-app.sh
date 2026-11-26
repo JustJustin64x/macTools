@@ -21,7 +21,7 @@ for arch in ${MACTOOLS_ARCHS:-$(uname -m)}; do
         -framework AppKit -framework ApplicationServices -framework Carbon \
         -o "$parts_dir/$arch/finder_keys"
     clang -arch "$arch" -Wall -Wextra -Werror -O2 -mmacosx-version-min=14.0 \
-        scripts/Launcher.m -framework Foundation -o "$parts_dir/$arch/macToolsLauncher"
+        scripts/Launcher.m -framework AppKit -o "$parts_dir/$arch/macToolsLauncher"
     helper_bins+=("$parts_dir/$arch/finder_keys")
     launcher_bins+=("$parts_dir/$arch/macToolsLauncher")
 done
@@ -39,7 +39,7 @@ chmod +x "$app_dir/Contents/Resources/install-app.sh"
 commit="$(git rev-parse HEAD 2>/dev/null || echo local)"
 epoch="$(git log -1 --format=%ct 2>/dev/null || date +%s)"
 if [ -n "$(git status --porcelain --untracked-files=normal 2>/dev/null)" ]; then commit="$commit-dirty"; epoch="$(date +%s)"; fi
-/usr/bin/plutil -replace CFBundleShortVersionString -string "${MACTOOLS_VERSION:-0.2.0}" "$app_dir/Contents/Info.plist"
+/usr/bin/plutil -replace CFBundleShortVersionString -string "${MACTOOLS_VERSION:-$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist)}" "$app_dir/Contents/Info.plist"
 /usr/bin/plutil -replace CFBundleVersion -string "${MACTOOLS_BUILD_NUMBER:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}" "$app_dir/Contents/Info.plist"
 /usr/bin/plutil -insert MacToolsCommit -string "$commit" "$app_dir/Contents/Info.plist"
 /usr/bin/plutil -insert MacToolsSourceEpoch -integer "$epoch" "$app_dir/Contents/Info.plist"

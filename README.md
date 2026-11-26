@@ -102,7 +102,7 @@ startet nicht automatisch als Fenster; nur aktivierte Tools starten im Hintergru
 
 ```text
 Sources/
-  MacTools/                 SwiftUI-Fenster, Zustand und Programmeinstieg
+  MacTools/                 AppKit-Fenster mit SwiftUI-Inhalt und Programmeinstieg
   MacToolsCore/             Tool-Katalog, LaunchAgents und Prozessstatus
   MacToolsUpdater/          Download und Prüfung von GitHub-Updates
   FinderKeys/               Objective-C-Implementierung von Finder Enter
