@@ -55,6 +55,10 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           RELEASE_VERSION: 0.2.${{ github.run_number }}
         run: |
+          if gh release view "build-$COMMIT_SHA" >/dev/null 2>&1; then
+            echo "Diese unveränderliche Veröffentlichung ist bereits vorhanden."
+            exit 0
+          fi
           gh release create "build-$COMMIT_SHA" release/macTools.zip release/SHA256SUMS \
             --target "$COMMIT_SHA" --latest \
             --title "macTools $RELEASE_VERSION" \
