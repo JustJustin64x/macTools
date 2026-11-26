@@ -24,8 +24,8 @@ jobs:
         run: |
           plutil -lint dist/macTools.app/Contents/Info.plist
           codesign --verify --deep --strict dist/macTools.app
-          lipo -verify_arch arm64 x86_64 dist/macTools.app/Contents/MacOS/macTools
-          lipo -verify_arch arm64 x86_64 dist/macTools.app/Contents/Helpers/macToolsUpdate
+          lipo dist/macTools.app/Contents/MacOS/macTools -verify_arch arm64 x86_64
+          lipo dist/macTools.app/Contents/Helpers/macToolsUpdate -verify_arch arm64 x86_64
       - name: Package release archive
         run: |
           ditto -c -k --norsrc --keepParent dist/macTools.app dist/macTools.zip
